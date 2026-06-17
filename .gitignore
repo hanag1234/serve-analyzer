@@ -1,4 +1,4 @@
-# Secrets - never commit these
+# Secrets 
 .env
 .env.local
 *.key
@@ -9,7 +9,7 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Project-specific generated files
+# Project specific generated files
 backend/uploads/
 backend/outputs/
 backend/pose_landmarker.task
