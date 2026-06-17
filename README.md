@@ -1,14 +1,14 @@
-# Serve Lab — AI Tennis Serve Analyzer (MVP)
+# Serve Lab — AI Tennis Serve Analyzer
 
-Upload a video of a tennis serve. Get pose-tracked skeleton overlay, biomechanical
+Upload a video of a tennis serve. Get pose tracked skeleton overlay, biomechanical
 metrics at the key phases of the serve, and AI-generated coaching feedback.
 
 This is a working MVP built to validate the idea fast, not a finished product.
-Read the "What this can and can't do yet" section before showing it to anyone.
+Read the "What this can and can't do yet" section.
 
 ---
 
-## How it works (the short version)
+## How it works
 
 1. You upload a video clip of someone serving, filmed from behind, full body in frame.
 2. The backend runs MediaPipe's pose estimation model on every frame to track 33
@@ -18,10 +18,9 @@ Read the "What this can and can't do yet" section before showing it to anyone.
 4. At those key moments, the code computes real biomechanical numbers: elbow angle
    at contact, knee bend at the load, shoulder-hip rotation separation, contact height,
    and toss height relative to contact.
-5. Those numbers get sent to Claude with a coaching-focused prompt, which writes
-   plain-language feedback — a strength, 1-3 specific things to work on, and a
-   concrete drill for each.
-6. You get back an annotated video (skeleton drawn on, key frames labeled) plus the
+5. Those numbers get sent to Claude with a coaching focused prompt, which writes
+   feedback — a strength, 1-3 specific things to work on, and a concrete drill for each.
+7. You get back an annotated video (skeleton drawn on, key frames labeled) plus the
    metrics and the written feedback.
 
 ---
@@ -31,14 +30,14 @@ Read the "What this can and can't do yet" section before showing it to anyone.
 ```
 serve-analyzer/
 ├── backend/
-│   ├── main.py                 FastAPI server — the API endpoints
+│   ├── main.py                 FastAPI server 
 │   ├── pose_analyzer.py        Core CV logic: pose tracking, phase detection, metrics
 │   ├── feedback_generator.py   Calls Claude to turn metrics into coaching feedback
 │   ├── requirements.txt        Python dependencies
-│   ├── setup.sh                One-time setup (installs deps, downloads pose model)
-│   └── pose_landmarker.task    (downloaded by setup.sh — not checked into git)
+│   ├── setup.sh                One-time setup 
+│   └── pose_landmarker.task    
 ├── frontend/
-│   └── index.html              Single-page upload + results UI (no build step needed)
+│   └── index.html              Single-page upload + results UI 
 └── sample_data/
     └── (put test videos here)
 ```
@@ -54,13 +53,10 @@ You'll need Python 3.10+ and an Anthropic API key (console.anthropic.com).
 ```bash
 cd backend
 bash setup.sh
-export ANTHROPIC_API_KEY=sk-ant-...    # or put this in your shell profile
+export ANTHROPIC_API_KEY=sk-ant-...   
 ```
 
 `setup.sh` installs the Python packages and downloads the MediaPipe pose model
-(`pose_landmarker.task`, about 6MB) — this requires internet access since the
-model isn't bundled with the pip package. If you ever see a `FileNotFoundError`
-mentioning `pose_landmarker.task`, this step didn't complete — re-run it.
 
 ### 2. Start the backend
 
