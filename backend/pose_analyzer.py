@@ -40,8 +40,6 @@ from mediapipe import Image, ImageFormat
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pose_landmarker.task")
 
-# MediaPipe Pose landmark indices we care about for serve analysis
-# (same indexing as the classic BlazePose 33-point topology)
 LANDMARKS = {
     "nose": 0,
     "left_shoulder": 11, "right_shoulder": 12,
@@ -179,7 +177,7 @@ def _reencode_to_h264(input_path: str, output_path: str):
     even though the file extension is .mp4.
 
     If ffmpeg isn't installed on the system, falls back to just using the
-    raw OpenCV output directly (renamed into place) so the pipeline doesn't
+    raw OpenCV output directly so the pipeline doesn't
     crash -- but the video may not play in-browser in that case.
     """
     try:
@@ -189,8 +187,8 @@ def _reencode_to_h264(input_path: str, output_path: str):
                 "-i", input_path,
                 "-c:v", "libx264",
                 "-preset", "fast",
-                "-pix_fmt", "yuv420p",   # ensures broad compatibility (Safari in particular)
-                "-movflags", "+faststart",  # lets browsers start playback before full download
+                "-pix_fmt", "yuv420p",   # ensures broad compatibility 
+                "-movflags", "+faststart",  
                 output_path,
             ],
             check=True,
@@ -199,8 +197,7 @@ def _reencode_to_h264(input_path: str, output_path: str):
         )
         os.remove(input_path)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # ffmpeg missing or failed -- fall back to the raw OpenCV file so the
-        # request still completes. Video may not play in every browser.
+        # ffmpeg missing or failed
         if os.path.exists(input_path):
             os.replace(input_path, output_path)
 
