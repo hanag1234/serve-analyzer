@@ -1,6 +1,4 @@
 #!/bin/bash
-# One-time setup script for Serve Lab backend.
-# Run this once after cloning, before starting the server.
 
 set -e
 
