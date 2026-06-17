@@ -1,0 +1,18 @@
+# Secrets - never commit these
+.env
+.env.local
+*.key
+
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Project-specific generated files
+backend/uploads/
+backend/outputs/
+backend/pose_landmarker.task
+
+# OS
+.DS_Store

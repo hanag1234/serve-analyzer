@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serve Lab — Serve Analysis</title>
+<style>
+  :root {
+    --court-clay: #c1542e;
+    --court-clay-dark: #9c4124;
+    --ink: #1a1f1a;
+    --paper: #f7f5ef;
+    --line: #d8d3c4;
+    --green-felt: #3a5a40;
+    --green-felt-light: #588157;
+    --gold: #d4a531;
+    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .court-line-top {
+    height: 6px;
+    background: repeating-linear-gradient(
+      90deg, var(--ink) 0 40px, transparent 40px 56px
+    );
+    opacity: 0.08;
+  }
+
+  header {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 32px;
+    text-align: center;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--court-clay-dark);
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--court-clay);
+  }
+
+  .sub {
+    margin-top: 16px;
+    font-size: 1.05rem;
+    color: #514d44;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  /* ---- Upload zone ---- */
+  .upload-zone {
+    border: 2px dashed var(--line);
+    border-radius: 4px;
+    padding: 56px 24px;
+    text-align: center;
+    background: white;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--court-clay);
+    background: #fdf6f1;
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 18px;
+    color: var(--court-clay);
+  }
+
+  .upload-label {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+
+  .upload-hint {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #8a8470;
+    font-family: var(--mono);
+  }
+
+  .filename-display {
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--green-felt);
+    display: none;
+  }
+
+  /* ---- Camera angle note ---- */
+  .angle-note {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: #fdf6f1;
+    border-left: 3px solid var(--court-clay);
+    font-size: 0.88rem;
+    color: #5c4632;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .angle-note strong { color: var(--court-clay-dark); }
+
+  /* ---- Analyze button ---- */
+  .analyze-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .analyze-btn:hover:not(:disabled) { background: var(--court-clay); }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---- Loading state ---- */
+  .loading-state {
+    display: none;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  .loading-state.active { display: block; }
+
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--line);
+    border-top-color: var(--court-clay);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: #8a8470;
+  }
+
+  /* ---- Results ---- */
+  .results {
+    display: none;
+    margin-top: 48px;
+  }
+
+  .results.active { display: block; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 640px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+
+  .video-panel video {
+    width: 100%;
+    border-radius: 4px;
+    background: black;
+    display: block;
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--court-clay-dark);
+    margin-bottom: 10px;
+  }
+
+  /* ---- Metrics ---- */
+  .metrics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .metric-name {
+    font-size: 0.92rem;
+    color: #514d44;
+  }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .metric-value.in-range { color: var(--green-felt); }
+  .metric-value.out-range { color: var(--court-clay-dark); }
+
+  /* ---- Feedback ---- */
+  .feedback-section {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 32px;
+    position: relative;
+  }
+
+  .feedback-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--green-felt);
+    border-radius: 4px 0 0 4px;
+  }
+
+  .feedback-section h2 {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .feedback-text {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #2b2b26;
+    white-space: pre-wrap;
+  }
+
+  .reset-link {
+    display: block;
+    text-align: center;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--court-clay-dark);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ---- Error state ---- */
+  .error-box {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 18px;
+    background: #fdeeee;
+    border-left: 3px solid #b0473e;
+    color: #7a2e26;
+    font-size: 0.9rem;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .error-box.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="court-line-top"></div>
+
+<header>
+  <div class="eyebrow">Serve Lab — Biomechanics from any phone video</div>
+  <h1>Upload your serve.<br>Get a real <em>coach's eye</em>.</h1>
+  <p class="sub">Pose-tracked frame-by-frame analysis of your toss, load, and contact point — with plain-language feedback you can take straight to the court.</p>
+</header>
+
+<main>
+
+  <div id="uploadStep">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="video/mp4,video/quicktime,video/x-m4v,.mov,.mp4">
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="upload-label">Drop a serve clip, or click to browse</div>
+      <div class="upload-hint">MP4 or MOV — under 100MB — 2 to 5 seconds works best</div>
+      <div class="filename-display" id="filenameDisplay"></div>
+    </div>
+
+    <div class="angle-note">
+      <strong>For best results:</strong> film from directly behind the server, at roughly baseline height, with the full body in frame from toss to follow-through. Side-on or elevated angles will reduce accuracy.
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" disabled>Analyze serve</button>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Tracking joints frame by frame…</div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-grid">
+      <div class="video-panel">
+        <div class="panel-label">Skeleton overlay</div>
+        <video id="resultVideo" controls loop muted></video>
+      </div>
+      <div class="metrics-panel">
+        <div class="panel-label">Measured at contact &amp; load</div>
+        <div class="metrics-list" id="metricsList"></div>
+      </div>
+    </div>
+
+    <div class="feedback-section">
+      <h2>Coach's notes</h2>
+      <div class="feedback-text" id="feedbackText"></div>
+    </div>
+
+    <div class="reset-link" id="resetLink">Analyze another serve →</div>
+  </div>
+
+</main>
+
+<script>
+  // Point this at your running backend. During local dev this is typically
+  // http://localhost:8000 (see backend/README for how to start the server).
+  const API_BASE = window.SERVE_LAB_API_BASE || "http://localhost:8000";
+
+  const METRIC_LABELS = {
+    elbow_angle_at_contact_deg: "Elbow extension at contact",
+    knee_angle_at_contact_deg: "Knee angle at contact",
+    knee_bend_at_loading_deg: "Knee bend at loading",
+    shoulder_hip_separation_at_contact_deg: "Shoulder–hip separation",
+    contact_height_rel_to_shoulder: "Contact height vs. shoulder",
+    toss_peak_vs_contact_height_rel: "Toss peak vs. contact height",
+  };
+
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const filenameDisplay = document.getElementById('filenameDisplay');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const errorBox = document.getElementById('errorBox');
+  const uploadStep = document.getElementById('uploadStep');
+  const loadingState = document.getElementById('loadingState');
+  const loadingText = document.getElementById('loadingText');
+  const results = document.getElementById('results');
+  const resultVideo = document.getElementById('resultVideo');
+  const metricsList = document.getElementById('metricsList');
+  const feedbackText = document.getElementById('feedbackText');
+  const resetLink = document.getElementById('resetLink');
+
+  let selectedFile = null;
+
+  const loadingMessages = [
+    "Tracking joints frame by frame…",
+    "Finding your loading position…",
+    "Locating contact point…",
+    "Comparing against reference ranges…",
+    "Writing up the coach's notes…",
+  ];
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('active');
+  }
+  function clearError() {
+    errorBox.classList.remove('active');
+  }
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelect();
+    }
+  });
+
+  fileInput.addEventListener('change', handleFileSelect);
+
+  function handleFileSelect() {
+    clearError();
+    const file = fileInput.files[0];
+    if (!file) return;
+    selectedFile = file;
+    filenameDisplay.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+    filenameDisplay.style.display = 'block';
+    analyzeBtn.disabled = false;
+  }
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    clearError();
+
+    uploadStep.style.display = 'none';
+    loadingState.classList.add('active');
+
+    let msgIndex = 0;
+    loadingText.textContent = loadingMessages[0];
+    const msgInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % loadingMessages.length;
+      loadingText.textContent = loadingMessages[msgIndex];
+    }, 2200);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const resp = await fetch(`${API_BASE}/analyze`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.detail || `Server returned ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      renderResults(data);
+
+    } catch (err) {
+      uploadStep.style.display = 'block';
+      showError(`Analysis failed: ${err.message}. Make sure the backend server is running.`);
+    } finally {
+      clearInterval(msgInterval);
+      loadingState.classList.remove('active');
+    }
+  });
+
+  function renderResults(data) {
+    resultVideo.src = `${API_BASE}${data.annotated_video_url}`;
+    resultVideo.play().catch(() => {});
+
+    metricsList.innerHTML = '';
+    const refRanges = {
+      elbow_angle_at_contact_deg: [155, 180],
+      knee_bend_at_loading_deg: [110, 150],
+      shoulder_hip_separation_at_contact_deg: [10, 45],
+      contact_height_rel_to_shoulder: [0.3, 1.2],
+      toss_peak_vs_contact_height_rel: [-0.3, 0.4],
+    };
+
+    for (const [key, value] of Object.entries(data.metrics || {})) {
+      const row = document.createElement('div');
+      row.className = 'metric-row';
+
+      const name = document.createElement('span');
+      name.className = 'metric-name';
+      name.textContent = METRIC_LABELS[key] || key;
+
+      const val = document.createElement('span');
+      val.className = 'metric-value';
+      val.textContent = value;
+
+      const range = refRanges[key];
+      if (range) {
+        const inRange = value >= range[0] && value <= range[1];
+        val.classList.add(inRange ? 'in-range' : 'out-range');
+      }
+
+      row.appendChild(name);
+      row.appendChild(val);
+      metricsList.appendChild(row);
+    }
+
+    if (!Object.keys(data.metrics || {}).length) {
+      metricsList.innerHTML = '<div class="metric-name">No reliable joint tracking found in this clip — try refilming with the full body visible.</div>';
+    }
+
+    feedbackText.textContent = data.feedback || 'No feedback generated.';
+
+    results.classList.add('active');
+  }
+
+  resetLink.addEventListener('click', () => {
+    results.classList.remove('active');
+    uploadStep.style.display = 'block';
+    fileInput.value = '';
+    filenameDisplay.style.display = 'none';
+    analyzeBtn.disabled = true;
+    selectedFile = null;
+  });
+</script>
+
+</body>
+</html>
