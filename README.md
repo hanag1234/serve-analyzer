@@ -1,4 +1,4 @@
-# Serve Lab — AI Tennis Serve Analyzer
+# AI Tennis Serve Analyzer
 
 Upload a video of a tennis serve. Get pose tracked skeleton overlay, biomechanical
 metrics at the key phases of the serve, and AI-generated coaching feedback.
